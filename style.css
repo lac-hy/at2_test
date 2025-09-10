@@ -232,3 +232,208 @@ html, body{
 .wx-row .mini-icon { font-size: 13px; }
 .wx-row .min { opacity: .7; }
 .wx-row .max { font-weight: 600; }
+
+:root{
+  --widget-width: 320px;   /* both widgets use this */
+  --stack-gap: 10px;       /* space between stacked widgets */
+}
+
+/* positions (player above weather) */
+#weather-widget { position: fixed; left: 15px; bottom: 15px; z-index: 12000; }
+#music-widget   { position: fixed; left: 15px; z-index: 12000;
+  bottom: calc(15px + var(--widget-height, 0px) + var(--stack-gap)); }
+
+/* same width */
+.wx, .player { width: var(--widget-width); }
+
+/* ===== Player Card ===== */
+.player{
+  display:grid; gap:10px;
+  padding:12px;
+  border-radius:22px;
+  color:#fff;
+  background: radial-gradient(160% 160% at 15% 10%, #232427 0%, #151619 60%, #101114 100%);
+  box-shadow: 0 14px 34px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.06);
+  border:1px solid rgba(255,255,255,.06);
+  font-family:'DM Sans',system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+  font-size:12px;
+}
+
+.pl-top{ display:flex; align-items:center; justify-content:space-between; }
+.pl-chip{
+  display:flex; align-items:center; gap:8px;
+  padding:6px 10px; border-radius:999px;
+  background:rgba(255,255,255,.06);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.08);
+}
+.pl-avatar{ width:22px; height:22px; border-radius:50%; object-fit:cover; }
+.pl-name{ font-weight:700; line-height:1; }
+.pl-handle{ opacity:.75; font-size:11px; line-height:1; }
+
+.icon-btn{
+  width:34px; height:34px; border-radius:10px;
+  border:1px solid rgba(255,255,255,.1);
+  background:rgba(255,255,255,.05); color:#fff; cursor:pointer;
+}
+.icon-btn:hover{ background:rgba(255,255,255,.1); }
+
+.pl-artwrap{
+  border-radius:16px; overflow:hidden;
+  background:linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.06);
+}
+.pl-art{ display:block; width:100%; height:180px; object-fit:cover; }
+
+.pl-timeline{ display:grid; grid-template-columns:auto 1fr auto; gap:8px; align-items:center; }
+#plProgress{
+  -webkit-appearance:none; appearance:none; height:4px; border-radius:2px;
+  background:#4a4d54; outline:none;
+}
+#plProgress::-webkit-slider-thumb{
+  -webkit-appearance:none; width:12px; height:12px; border-radius:50%; background:#fff; cursor:pointer;
+}
+#plProgress::-moz-range-thumb{
+  width:12px; height:12px; border-radius:50%; background:#fff; border:0; cursor:pointer;
+}
+
+.pl-controls{ display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:10px; }
+.round{
+  height:40px; border-radius:12px; border:1px solid rgba(255,255,255,.1);
+  background:#1a1b1e; color:#fff; cursor:pointer; font-size:16px;
+  box-shadow:0 4px 10px rgba(0,0,0,.25), inset 0 1px 0 rgba(255,255,255,.05);
+}
+.round:hover{ background:#202226; }
+.round.primary{
+  width:56px; height:56px; border-radius:18px; margin:0 auto; font-size:20px; border:none;
+  background: radial-gradient(120% 120% at 50% 30%, #ffffff 0%, #f3f3f3 60%, #d8d8d8 100%);
+  color:#111;
+}
+.round.primary.is-playing{ background: radial-gradient(120% 120% at 50% 30%, #ff5b50 0%, #ff3b30 40%, #cf2a23 100%); color:#fff; }
+
+/* ----- stack: player above weather ----- */
+:root{
+  --stack-gap: 10px;              /* space between the two widgets */
+  --widget-width: 320px;          /* will be overwritten by JS */
+  --weather-height: 0px;          /* will be overwritten by JS */
+}
+
+/* Make widths identical (and include padding/borders) */
+#weather-widget, #music-widget { width: var(--widget-width); box-sizing: border-box; }
+
+/* Ensure the player never auto-expands beyond its box */
+.player { width: 100%; max-width: 100%; overflow: hidden; }
+
+/* Art should conform to the card width */
+.player .pl-artwrap { width: 100%; }
+.player .pl-art     { width: 100%; height: 180px; object-fit: cove }
+
+:root{
+  --widget-width: 360px;   /* change once; both follow */
+  --stack-gap: 12px;       /* space between widgets */
+}
+
+/* One fixed anchor for BOTH widgets */
+.hud-stack{
+  position: fixed;
+  left: 15px;
+  bottom: 15px;
+  z-index: 12000;
+  display: flex;
+  flex-direction: column;  /* player above, weather below */
+  gap: var(--stack-gap);
+  width: var(--widget-width);
+}
+
+/* Make children obey container’s width */
+.hud-stack > *{
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Neutralize any old fixed-position rules */
+#music-widget, #weather-widget{
+  position: static !important;
+  left: auto !important;
+  bottom: auto !important;
+  right: auto !important;
+  top: auto !important;
+  max-width: 100%;
+}
+
+/* Shrink music player cover art */
+#music-widget .pl-art {
+  height: 100px;        /* try 120px, 140px, etc. */
+  object-fit: cover;    /* crops the image if needed */
+  border-radius: 12px;
+}
+/* Player control container */
+#music-widget .pl-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+/* Equal-sized rectangular buttons */
+#music-widget .pl-controls button {
+  flex: 1;                     /* all buttons share equal width */
+  height: 48px;                /* consistent height */
+  border-radius: 12px;         /* curved edges */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 18px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.1s ease;
+}
+
+/* Variants */
+#music-widget .pl-controls .primary {
+  background: #ff4757;
+  color: white;
+}
+
+#music-widget .pl-controls .ghost {
+  background: #2f3542;
+  color: white;
+}
+
+#music-widget .pl-controls button:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+#music-widget .pl-chip {
+  padding: 6px 12px;
+  gap: 8px;
+  border-radius: 999px;
+}
+
+#music-widget .pl-name   { font-weight: 800; }
+#music-widget .pl-handle { opacity: 0.85; }
+
+/* Sliced Sun card */
+.viz-slices{
+  width: 100%;
+  height: 250px;                 /* tweak height if you want it taller/shorter */
+  border-radius: 18px;
+  padding: 8px;
+  box-sizing: border-box;
+  background: radial-gradient(140% 140% at 20% 10%, #1a1b1e 0%, #0f1012 60%, #0b0c0e 100%);
+  border: 1px solid rgba(255,255,255,.06);
+  box-shadow: 0 10px 24px rgba(0,0,0,.34), inset 0 1px 0 rgba(255,255,255,.06);
+  overflow: hidden;
+}
+
+#sunCanvas{
+  width: 100%;
+  height: 100%;
+  display: block;
+  border-radius: 12px;
+  background: #0c0d0d;           /* deep base like your reference */
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.06);
+}
+

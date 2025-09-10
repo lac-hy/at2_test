@@ -11,36 +11,74 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
   <!-- DM Sans -->
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@700;800&display=swap" rel="stylesheet" />
 
   <!-- App styles -->
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
-  <!-- Weather Widget (bottom-left) -->
-<div id="weather-widget" class="wx">
-  <div class="wx-now">
-    <div class="wx-now-row">
-      <span class="wx-icon" aria-hidden="true">☀️</span>
-      <span id="wx-condition">Clear sky</span>
-    </div>
-    <div class="wx-temp-row">
-      <span id="wx-temp" class="wx-temp">24</span><span class="wx-deg">°</span>
-    </div>
-    <div id="wx-city" class="wx-city">Melbourne</div>
-  </div>
+  <!-- Map (only once) -->
+  <div id="map"></div>
 
-  <div class="wx-forecast">
-    <!-- rows injected by JS -->
-  </div>
-</div>
-
+  <!-- Giant background title -->
   <div class="title-giant">MELBOURNE CITY</div>
 
-  <!-- Map -->
-  <div id="map"></div>
-  
+  <!-- HUD stack: player (top) + weather (bottom) -->
+  <div id="hud" class="hud-stack">
+    <div id="sun-slices" class="viz-slices">
+  <canvas id="sunCanvas"></canvas>
+</div>
+    <!-- Music Player -->
+    <div id="music-widget" class="player">
+      <div class="pl-top">
+        <div class="pl-chip">
+          <img class="pl-avatar" id="plAvatar" src="https://picsum.photos/seed/artist/40" alt="" />
+          <div class="pl-id">
+            <div class="pl-name" id="plName">New Audio</div>
+            <div class="pl-handle" id="plHandle">@soundscape</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="pl-artwrap">
+        <img id="plArt" class="pl-art" src="https://picsum.photos/seed/cover/800/800" alt="cover" />
+      </div>
+
+      <div class="pl-timeline">
+        <span id="plCurrent">0:00</span>
+        <input id="plProgress" type="range" min="0" max="100" value="0" />
+        <span id="plDuration">-0:00</span>
+      </div>
+
+      <div class="pl-controls">
+        <button id="plPrev" class="round ghost" aria-label="Previous">⏮</button>
+        <button id="plPlay" class="round primary" aria-label="Play">▶︎</button>
+        <button id="plNext" class="round ghost" aria-label="Next">⏭</button>
+      </div>
+
+      <audio id="plAudio" preload="metadata"></audio>
+    </div>
+
+    <!-- Weather Widget -->
+    <div id="weather-widget" class="wx">
+      <div class="wx-now">
+        <div class="wx-now-row">
+          <span class="wx-icon" aria-hidden="true">☀️</span>
+          <span id="wx-condition">Clear sky</span>
+        </div>
+        <div class="wx-temp-row">
+          <span id="wx-temp" class="wx-temp">24</span><span class="wx-deg">°</span>
+        </div>
+        <div id="wx-city" class="wx-city">Melbourne</div>
+      </div>
+
+      <div class="wx-forecast">
+        <!-- rows injected by app.js -->
+      </div>
+    </div>
+
+  </div><!-- /hud-stack -->
 
   <!-- Glassmorphism Modal -->
   <div id="overlay" class="overlay" aria-hidden="true"></div>
@@ -48,7 +86,9 @@
     <video id="glassVideo" class="glass-video" autoplay muted loop playsinline></video>
 
     <div class="glass-top">
-      <div id="groupPill" class="group-pill"><span class="dot"></span><span id="groupName">Category</span></div>
+      <div id="groupPill" class="group-pill">
+        <span class="dot"></span><span id="groupName">Category</span>
+      </div>
       <button class="close-btn" id="closeBtn" aria-label="Close">×</button>
     </div>
 
@@ -57,7 +97,6 @@
       <p class="meta">Signature sound: <b id="sigSound">—</b></p>
     </div>
   </article>
-  </div>
 
   <!-- Leaflet JS -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
