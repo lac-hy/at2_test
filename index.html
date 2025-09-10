@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Melbourne As A Soundscape</title>
+
+  <link rel="icon" type="image/png" href="image/slik.png" />
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+  <!-- DM Sans -->
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@700;800&display=swap" rel="stylesheet">
+
+  <!-- App styles -->
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- Weather Widget (bottom-left) -->
+<div id="weather-widget" class="wx">
+  <div class="wx-now">
+    <div class="wx-now-row">
+      <span class="wx-icon" aria-hidden="true">☀️</span>
+      <span id="wx-condition">Clear sky</span>
+    </div>
+    <div class="wx-temp-row">
+      <span id="wx-temp" class="wx-temp">24</span><span class="wx-deg">°</span>
+    </div>
+    <div id="wx-city" class="wx-city">Melbourne</div>
+  </div>
+
+  <div class="wx-forecast">
+    <!-- rows injected by JS -->
+  </div>
+</div>
+
+  <div class="title-giant">MELBOURNE CITY</div>
+
+  <!-- Map -->
+  <div id="map"></div>
+  
+
+  <!-- Glassmorphism Modal -->
+  <div id="overlay" class="overlay" aria-hidden="true"></div>
+  <article id="glass" class="glass-card" role="dialog" aria-modal="true" aria-labelledby="placeName">
+    <video id="glassVideo" class="glass-video" autoplay muted loop playsinline></video>
+
+    <div class="glass-top">
+      <div id="groupPill" class="group-pill"><span class="dot"></span><span id="groupName">Category</span></div>
+      <button class="close-btn" id="closeBtn" aria-label="Close">×</button>
+    </div>
+
+    <div class="glass-bottom">
+      <h2 id="placeName" class="place-name">Place</h2>
+      <p class="meta">Signature sound: <b id="sigSound">—</b></p>
+    </div>
+  </article>
+  </div>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <!-- App logic -->
+  <script src="app.js"></script>
+</body>
+</html>

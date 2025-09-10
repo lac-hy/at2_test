@@ -1,0 +1,234 @@
+/* ============== Root tokens ============== */
+:root{
+  --paper:#efefec;
+  --ink:#353535;
+  --accent:#ffd84d;
+
+  --glass-bg: rgba(255,255,255,.14);
+  --glass-border: rgba(255,255,255,.35);
+
+  /* category colours */
+  --central:#444;
+  --coastal:#2a7de1;
+  --greater:#3c9c5a;
+  --landmark:#ff991c; 
+}
+
+/* ============== Layout ============== */
+html, body{
+  height:100%;
+  margin:0;
+  font-family:'DM Sans', system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+  background:var(--paper);
+  color:var(--ink);
+}
+
+/* Map sits at the bottom of the stacking order */
+#map{
+  width:100%;
+  height:100vh;
+  position:relative;
+  z-index:0;           
+}
+
+/* Subtle paper/grain on top of tiles */
+#map::after{
+  content:"";
+  position:absolute; inset:0; pointer-events:none;
+  opacity:.20; mix-blend-mode:multiply;
+  background:
+    radial-gradient(120px 120px at 15% 20%, #0000 60%, #0002 61% 62%, #0000 63%) 0 0/300px 300px,
+    radial-gradient(150px 150px at 75% 70%, #0000 60%, #0002 61% 62%, #0000 63%) 0 0/320px 320px;
+  filter:contrast(120%) brightness(105%);
+}
+
+/* Hide Leaflet UI (zoom/attribution/layers) */
+.leaflet-control-container{ display:none !important; }
+
+/* ============== Heading (top-left) ============== */
+.title-giant {
+  position: absolute;
+  top: -2vw;
+  left: 0;
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 800;
+  font-size: 12vw;
+  line-height: 1;
+  color: rgba(0,0,0,0.2);
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+  overflow: hidden;
+  max-width: 100%;
+  z-index: 2000;
+  pointer-events: none;
+  user-select: none;
+  transform: translateX(-0.8vw);
+}
+
+/* ============== Map dots & guide ============== */
+.glow-dot{
+  width:16px; height:16px; border-radius:50%;
+  background:rgba(255,216,77,0.95);
+  box-shadow:
+    0 0 8px rgba(255,216,77,.9),
+    0 0 18px rgba(255,216,77,.8),
+    0 0 28px rgba(255,216,77,.7);
+}
+.guide-line{
+  stroke-dasharray:6 8 !important;
+  stroke:#ffffff !important;
+  stroke-opacity:.8 !important;
+  stroke-width:2px !important;
+}
+
+/* ============== Glass Modal (center) ============== */
+.overlay{
+  position:fixed; inset:0; z-index:900;
+  background:rgba(0,0,0,.25);
+  opacity:0; pointer-events:none; transition:opacity .25s ease;
+}
+.overlay.show{ opacity:1; pointer-events:auto; }
+
+.glass-card{
+  position:fixed; z-index:901;
+  width:min(560px, 92vw);
+  aspect-ratio:16/10;
+  border-radius:18px;
+  overflow:hidden;
+  inset:50% auto auto 50%;
+  transform:translate(-50%,-50%) scale(.98);
+  background:var(--glass-bg);
+  border:1px solid var(--glass-border);
+  backdrop-filter:blur(14px) saturate(115%);
+  -webkit-backdrop-filter:blur(14px) saturate(115%);
+  box-shadow:0 10px 30px rgba(0,0,0,.25), inset 0 1px 0 rgba(255,255,255,.35);
+  opacity:0; pointer-events:none; transition:opacity .25s ease, transform .25s ease;
+}
+.glass-card.show{ opacity:1; pointer-events:auto; transform:translate(-50%,-50%) scale(1); }
+
+.glass-video{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; filter:saturate(110%) contrast(102%); }
+
+.glass-top{
+  position:absolute; top:10px; left:12px; right:12px;
+  display:flex; align-items:center; gap:10px; color:#fff;
+  text-shadow:0 1px 1px rgba(0,0,0,.35);
+}
+.group-pill{
+  display:flex; align-items:center; gap:8px;
+  font-weight:500; font-size:13px;
+  padding:6px 10px; border-radius:999px; color:#fff;
+}
+.group-pill .dot{ width:9px; height:9px; border-radius:50%; background:#fff; }
+
+/* category colour classes */
+.group-central{ background:var(--central); }
+.group-coastal{ background:var(--coastal); }
+.group-greater{ background:var(--greater); }
+.group-landmark{ background:var(--landmark); }
+
+.close-btn{
+  margin-left:auto; display:grid; place-items:center;
+  width:32px; height:32px; border-radius:10px;
+  background:rgba(0,0,0,.35);
+  border:1px solid rgba(255,255,255,.25);
+  color:#fff; font-weight:700; cursor:pointer;
+  transition:transform .12s ease, background .2s ease;
+}
+.close-btn:hover{ transform:scale(1.05); background:rgba(0,0,0,.45); }
+
+.glass-bottom{
+  position:absolute; left:14px; right:14px; bottom:12px; color:#fff;
+  text-shadow:0 2px 4px rgba(0,0,0,.4);
+}
+.place-name{ font-weight:700; font-size:28px; line-height:1.1; margin:0 0 4px; }
+.meta{ font-weight:500; font-size:14px; opacity:.9; margin:0; }
+.meta b{ font-weight:700; }
+
+@media (prefers-reduced-motion: reduce){
+  .glass-card, .overlay{ transition:none; }
+}
+
+#time-widget {
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  padding: 10px 14px;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 12px;
+  background: rgba(0,0,0,0.65);
+  color: #fff;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 12000; 
+  font-family: 'DM Sans', sans-serif;
+  letter-spacing: 0.5px;
+}
+
+/* ========== Compact Weather Widget ========== */
+.wx {
+  position: fixed;
+  bottom: 15px;
+  left: 15px;
+  z-index: 12000;
+  display: grid;
+  grid-template-columns: auto auto;
+  gap: 6px;
+  padding: 8px;
+  border-radius: 14px;
+  background: #0f0f10;
+  color: #fff;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  line-height: 1.3;
+  box-shadow: 0 4px 14px rgba(0,0,0,.25);
+  border: 1px solid rgba(255,255,255,.05);
+  max-width: 320px;
+}
+
+.wx-now {
+  background: #ffd400;
+  color: #0a0a0a;
+  border-radius: 12px;
+  padding: 14px 18px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-width: 140px;
+  text-align: left;
+}
+
+.wx-now-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.wx-icon { font-size: 14px; }
+.wx-temp-row { margin-top: 6px; line-height: 1; }
+.wx-temp { font-size: 28px; font-weight: 700; }
+.wx-deg { font-size: 18px; font-weight: 700; margin-left: 1px; }
+.wx-city { margin-top: 4px; font-weight: 600; font-size: 11px; }
+
+.wx-forecast {
+  background: #141416;
+  border-radius: 10px;
+  padding: 6px 8px;
+  display: grid;
+  gap: 4px;
+}
+
+.wx-row {
+  display: grid;
+  grid-template-columns: auto auto auto auto;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+}
+
+.wx-row .day { font-weight: 600; }
+.wx-row .mini-icon { font-size: 13px; }
+.wx-row .min { opacity: .7; }
+.wx-row .max { font-weight: 600; }
