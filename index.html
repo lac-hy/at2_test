@@ -22,10 +22,15 @@
   <div id="map"></div>
 
   <!-- Giant background title -->
-  <div class="title-giant">MELBOURNE CITY</div>
+  <div id="bigTitle" class="title-giant">MELBOURNE CITY</div>
 
   <!-- HUD stack: player (top) + weather (bottom) -->
   <div id="hud" class="hud-stack">
+    <div id="clock-widget" class="clock">
+  <div class="clock-ampm" id="ampm">PM</div>
+  <div class="clock-block" id="hours">12</div>
+  <div class="clock-block" id="minutes">34</div>
+</div>
     <div id="sun-slices" class="viz-slices">
   <canvas id="sunCanvas"></canvas>
 </div>
