@@ -105,6 +105,7 @@ const POIS = [
   { name:"MCG",           lat:-37.8199, lng:144.9832, category:"Landmarks",         video:"mcg.mp4",              signature:"Fans Cheering & Celebrity Performances" },
   { name:"Kew",           lat:-37.8021, lng:145.0318, category:"Greater Melbourne", video:"kew.mp4",              signature:"???" },
   { name:"South Yarra",   lat:-37.8380, lng:144.9911, category:"Central Melbourne", video:"yarra.mp4",            signature:"Turbo Whistles & Tram Bells"},
+  { name:"Doncaster",     lat:-37.7830, lng:145.1224, category:"Greater Melbourne", video:"doncaster.mp4",        signature:"???"},
 ];
 
 function addGlowingDot(poi) {
