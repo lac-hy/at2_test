@@ -64,7 +64,7 @@ function setMapStyle() {
 
     if (title) {
       title.style.color = "#353535"; // dark grey for day
-      title.style.opacity = "0.6";    // semi-transparent
+      title.style.opacity = "0.4";    // semi-transparent
     }
   } else {
     map.addLayer(darkTiles);
@@ -106,6 +106,11 @@ const POIS = [
   { name:"Kew",           lat:-37.8021, lng:145.0318, category:"Greater Melbourne", video:"kew.mp4",              signature:"???" },
   { name:"South Yarra",   lat:-37.8380, lng:144.9911, category:"Central Melbourne", video:"yarra.mp4",            signature:"Turbo Whistles & Tram Bells"},
   { name:"Doncaster",     lat:-37.7830, lng:145.1224, category:"Greater Melbourne", video:"doncaster.mp4",        signature:"???"},
+  { name:"Malvern",       lat:-37.8584, lng:145.0303, category:"Greater Melbourne", video:"malvern.mp4",          signature:"???"},
+  { name:"Crown Casino",  lat:-37.8233, lng:144.9586, category:"Landmarks",         video:"crown.mp4",            signature:"Slot Machines Ding & Chips Falling"},
+  { name:"Fed Square",    lat:-37.8177, lng:144.9693, category:"Landmarks",         video:"fedsquare.mp4",        signature:"Where City Sounds Converge & Never Sleep"},
+  { name:"Vic Markets",   lat:-37.8145, lng:144.9604, category:"Landmarks",         video:"vicmarket.mp4",        signature:"Sounds of Bartering & Diverse Beats"},
+  { name:"Melb Central",  lat:-37.8107, lng:144.9627, category:"Landmarks",         video:"markets.mp4",          signature:"Busy Crowds & Clock Chimes"},
 ];
 
 function addGlowingDot(poi) {
