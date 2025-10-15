@@ -36,29 +36,20 @@ const NIGHT_START_MINUTE = 0;
 
 function getIsDay() {
   const now = new Date();
-  const h = now.getHours();
-  const m = now.getMinutes();
-  const minsNow = h * 60 + m;
-
+  const minsNow = now.getHours() * 60 + now.getMinutes();
   const dayStart   = DAY_START_HOUR * 60 + DAY_START_MINUTE;
   const nightStart = NIGHT_START_HOUR * 60 + NIGHT_START_MINUTE;
-
-  if (dayStart < nightStart) {
-    return minsNow >= dayStart && minsNow < nightStart;
-  } else {
-    return minsNow >= dayStart || minsNow < nightStart;
-  }
+  return (dayStart < nightStart)
+    ? (minsNow >= dayStart && minsNow < nightStart)
+    : (minsNow >= dayStart || minsNow < nightStart);
 }
-
 function setMapStyle() {
   const title = document.getElementById("bigTitle");
   if (getIsDay()) {
-    map.addLayer(lightTiles);
-    map.removeLayer(darkTiles);
+    map.addLayer(lightTiles); map.removeLayer(darkTiles);
     if (title) { title.style.color = "#353535"; title.style.opacity = "0.4"; }
   } else {
-    map.addLayer(darkTiles);
-    map.removeLayer(lightTiles);
+    map.addLayer(darkTiles); map.removeLayer(lightTiles);
     if (title) { title.style.color = "#ffd84d"; title.style.opacity = "0.6"; }
   }
 }
@@ -74,17 +65,20 @@ const POIS = [
   { name:"Southbank",     lat:-37.8230, lng:144.9640, category:"Central Melbourne", video:"southbank.mp4",        signature:"River ambience & buskers" },
   { name:"Brunswick",     lat:-37.7650, lng:144.9610, category:"Central Melbourne", video:"brunswick.mp4",        signature:"Live music & buzzing bars" },
   { name:"Collingwood",   lat:-37.8045, lng:144.9860, category:"Central Melbourne", video:"collingwood.mp4",      signature:"Studios & brewery hum" },
+
   { name:"St Kilda",      lat:-37.8676, lng:144.9809, category:"Coastal",           video:"video/stkilda.mp4",    signature:"Waves & gulls" },
   { name:"Brighton",      lat:-37.9056, lng:145.0160, category:"Coastal",           video:"video/brighton.mp4",   signature:"Beach breeze & footsteps" },
   { name:"Port Melbourne",lat:-37.8380, lng:144.9390, category:"Coastal",           video:"portmelb.mp4",         signature:"Ferries & harbor wind" },
   { name:"Williamstown",  lat:-37.8610, lng:144.8960, category:"Coastal",           video:"williamstown.mp4",     signature:"Boats & seagulls" },
   { name:"Elwood",        lat:-37.8890, lng:144.9840, category:"Coastal",           video:"elwood.mp4",           signature:"Joggers by the bay" },
+
   { name:"Nunawading",    lat:-37.8183, lng:145.1737, category:"Greater Melbourne", video:"nunawading.mp4",       signature:"Suburban calm & trains" },
   { name:"Chadstone",     lat:-37.8850, lng:145.0820, category:"Greater Melbourne", video:"chadstone.mp4",        signature:"Mall ambience" },
   { name:"Camberwell",    lat:-37.8350, lng:145.0710, category:"Greater Melbourne", video:"camberwell.mp4",       signature:"Trams & suburban life" },
   { name:"Footscray",     lat:-37.7995, lng:144.9319, category:"Greater Melbourne", video:"footscray.mp4",        signature:"Markets & trains" },
   { name:"Greensborough", lat:-37.7000, lng:145.1000, category:"Greater Melbourne", video:"greens.mp4",           signature:"Birdsong & creek" },
   { name:"Burwood",       lat:-37.8485, lng:145.1082, category:"Greater Melbourne", video:"burwood.mp4",          signature:"Busy Streets & Diversity" },
+
   { name:"AAMI Park",     lat:-37.8251, lng:144.9837, category:"Landmarks",         video:"aamipark.mp4",         signature:"Roaring Crowds & Intense Sports" },
   { name:"MCG",           lat:-37.8199, lng:144.9832, category:"Landmarks",         video:"mcg.mp4",              signature:"Fans Cheering & Celebrity Performances" },
   { name:"Kew",           lat:-37.8021, lng:145.0318, category:"Greater Melbourne", video:"kew.mp4",              signature:"???" },
@@ -97,15 +91,12 @@ const POIS = [
   { name:"Melb Central",  lat:-37.8107, lng:144.9627, category:"Landmarks",         video:"markets.mp4",          signature:"Busy Crowds & Clock Chimes"},
 ];
 
-/* hook glow dots: open glass + toggle sound (no visual changes) */
+/* glow markers: click opens glass + toggles sound */
 function addGlowingDot(poi) {
   const dotIcon = L.divIcon({ html: '<div class="glow-dot"></div>', className: '', iconSize: [16, 16] });
   L.marker([poi.lat, poi.lng], { icon: dotIcon })
     .addTo(map)
-    .on("click", () => {
-      openGlass(poi);
-      AudioEngine.toggleForPoint(poi);
-    });
+    .on("click", () => { openGlass(poi); AudioEngine.toggleForPoint(poi); });
 }
 POIS.forEach(addGlowingDot);
 
@@ -319,7 +310,6 @@ async function reverseGeocode(lat, lon) {
     botG.addColorStop(1, "rgba(100, 34, 175, 0.55)");
     bctx.fillStyle = botG; bctx.fillRect(0, H * 0.4, W, H * 0.6);
   }
-
   function fNoise(t, a = 1, b = 0) { return 0.5 + 0.5 * Math.sin(t * a + b); }
 
   function paintDynamicCore(t) {
@@ -469,20 +459,40 @@ setInterval(updateClock, 1000);
 updateClock();
 
 /* -------------------------------------------------
-   WebAudio-based generative melody system (looping)
+   WebAudio-based generative sound engine
    ------------------------------------------------- */
 const AudioEngine = (() => {
   const Ctx = window.AudioContext || window.webkitAudioContext;
   const ctx = new Ctx();
-  const master = ctx.createGain();
-  master.gain.value = 0.75;
-  master.connect(ctx.destination);
+
+  // Master with gentle compressor to avoid clipping
+  const master = ctx.createGain(); master.gain.value = 0.7;
+  const comp = ctx.createDynamicsCompressor();
+  comp.threshold.value = -18; comp.knee.value = 24; comp.ratio.value = 3; comp.attack.value = 0.003; comp.release.value = 0.25;
+  master.connect(comp).connect(ctx.destination);
+
+  // Reverb bus (simple impulse)
+  const reverb = ctx.createConvolver();
+  reverb.buffer = (function makeImpulse(duration = 2.8, decay = 2.4){
+    const rate = ctx.sampleRate, len = Math.floor(rate * duration);
+    const buf = ctx.createBuffer(2, len, rate);
+    for (let ch = 0; ch < 2; ch++) {
+      const d = buf.getChannelData(ch);
+      for (let i = 0; i < len; i++) {
+        const t = i / len;
+        d[i] = (Math.random()*2-1) * Math.pow(1 - t, decay);
+      }
+    }
+    return buf;
+  })();
+  const revGain = ctx.createGain(); revGain.gain.value = 0.22;
+  reverb.connect(revGain).connect(comp);
 
   const listeners = { start: [], stop: [] };
   const emit = (evt, payload) => (listeners[evt] || []).forEach(cb => cb(payload));
   const on   = (evt, cb) => { if (listeners[evt]) listeners[evt].push(cb); };
 
-  const active = new Map(); // id -> { voice, timer, point }
+  const active = new Map(); // id -> { voice?, drums?, timer, point, params }
 
   const SCHEDULE_AHEAD = 0.15, TICK_MS = 50;
   const scales = {
@@ -494,74 +504,329 @@ const AudioEngine = (() => {
   const seededRand = (seed) => { let x = Math.sin(seed) * 10000; return x - Math.floor(x); };
   const noteFreq   = (midi) => 440 * Math.pow(2, (midi - 69) / 12);
 
-  function makeVoice(seed){
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    const filt = ctx.createBiquadFilter();
-    const delay = ctx.createDelay(0.6);
-    const fb = ctx.createGain();
-
-    osc.type = ['sine','triangle','sawtooth'][Math.floor(seededRand(seed)*3)];
-    gain.gain.value = 0;
-    filt.type = 'lowpass';
-    filt.frequency.value = 1000 + 1000 * seededRand(seed + 2);
-    delay.delayTime.value = 0.18 + 0.12 * seededRand(seed + 3);
-    fb.gain.value = 0.22 + 0.22 * seededRand(seed + 4);
-
-    osc.connect(gain); gain.connect(filt);
-    filt.connect(delay); delay.connect(fb).connect(delay);
-    filt.connect(master); delay.connect(master);
-    osc.start();
-
-    function trigger(freq, t){
-      const a=0.01,d=0.10,s=0.16,r=0.20, g=gain.gain;
-      osc.frequency.setValueAtTime(freq, t);
-      g.cancelScheduledValues(t);
-      g.setValueAtTime(0, t);
-      g.linearRampToValueAtTime(0.85, t + a);
-      g.linearRampToValueAtTime(0.55, t + a + d);
-      g.linearRampToValueAtTime(0.55, t + a + d + s);
-      g.linearRampToValueAtTime(0.0, t + a + d + s + r);
+  /* ------------- Chord Sampler (optional) ------------- */
+  const ChordSampler = (() => {
+    const cache = new Map();
+    async function load(name, url){
+      try {
+        if (cache.has(name)) return cache.get(name);
+        const res = await fetch(url);
+        if (!res.ok) return null;
+        const arr = await res.arrayBuffer();
+        const buf = await ctx.decodeAudioData(arr);
+        cache.set(name, buf);
+        return buf;
+      } catch { return null; }
     }
-    function stop(when = ctx.currentTime){
-      gain.gain.linearRampToValueAtTime(0, when + 0.1);
-      setTimeout(() => { try{ osc.stop(); } catch(e){} }, 400);
+    function has(name){ return cache.has(name); }
+    function anyLoaded(){ return cache.size > 0; }
+    function play(name, when = ctx.currentTime, level = 1){
+      const buf = cache.get(name);
+      if (!buf) return null;
+      const src = ctx.createBufferSource(); src.buffer = buf;
+      const g = ctx.createGain(); g.gain.value = level;
+      const send = ctx.createGain(); send.gain.value = 0.22;
+      src.connect(g); g.connect(master); g.connect(send); send.connect(reverb);
+      src.start(when);
+      return { stop: (t = ctx.currentTime) => { try{ src.stop(t); } catch(e){} } };
     }
-    return { trigger, stop };
+    return { load, has, anyLoaded, play };
+  })();
+
+  // Map a few chords (drop real files in /audio/chords/ to activate)
+  const CHORD_FILES = {
+    Cmaj7: 'audio/chords/Cmaj7.ogg',
+    Dm7:   'audio/chords/Dm7.ogg',
+    Em7:   'audio/chords/Em7.ogg',
+    Fmaj7: 'audio/chords/Fmaj7.ogg',
+    G7:    'audio/chords/G7.ogg',
+    Am7:   'audio/chords/Am7.ogg',
+  };
+  // Preload asynchronously (won’t block)
+  Promise.all(Object.entries(CHORD_FILES).map(([n,u]) => ChordSampler.load(n, u))).catch(()=>{});
+
+  /* ========= INSTRUMENTS ========= */
+
+  // Keys/Strings (detuned ensemble + chorus + send) + chord trigger
+  function makeKeysEnsemble(seed) {
+    const lp = ctx.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 1600;
+    const chorusL = ctx.createDelay(); chorusL.delayTime.value = 0.012;
+    const chorusR = ctx.createDelay(); chorusR.delayTime.value = 0.016;
+    const lfo = ctx.createOscillator(); const lfoGain = ctx.createGain();
+    lfo.frequency.value = 0.25 + 0.05 * seededRand(seed+9);
+    lfoGain.gain.value = 0.004;
+    lfo.connect(lfoGain); lfoGain.connect(chorusL.delayTime); lfoGain.connect(chorusR.delayTime);
+    lfo.start();
+
+    const mix = ctx.createGain(); mix.gain.value = 0.9;
+    const g = ctx.createGain(); g.gain.value = 0;
+
+    const oscA = ctx.createOscillator(); oscA.type = "sawtooth"; oscA.detune.value = -7;
+    const oscB = ctx.createOscillator(); oscB.type = "sawtooth"; oscB.detune.value = +7;
+    const oscC = ctx.createOscillator(); oscC.type = "triangle"; oscC.detune.value = +2;
+
+    oscA.connect(mix); oscB.connect(mix); oscC.connect(mix);
+    mix.connect(lp); lp.connect(chorusL); lp.connect(chorusR);
+    lp.connect(g); chorusL.connect(g); chorusR.connect(g);
+
+    // output bus
+    const out = ctx.createGain(); out.gain.value = 1;
+    g.connect(out);
+    const send = ctx.createGain(); send.gain.value = 0.18;
+    out.connect(master); out.connect(send); send.connect(reverb);
+
+    // subtle air layer driven by "noise"
+    const airNoise = ctx.createBufferSource();
+    airNoise.buffer = (function(){
+      const len = ctx.sampleRate * 2;
+      const b = ctx.createBuffer(1, len, ctx.sampleRate);
+      const d = b.getChannelData(0); for (let i=0;i<len;i++) d[i] = (Math.random()*2-1);
+      return b;
+    })();
+    const airHP = ctx.createBiquadFilter(); airHP.type = "highpass"; airHP.frequency.value = 4000;
+    const airG = ctx.createGain(); airG.gain.value = 0;
+    airNoise.loop = true; airNoise.start();
+    airNoise.connect(airHP).connect(airG).connect(out);
+
+    [oscA, oscB, oscC].forEach(o => o.start());
+
+    function env(t){
+      const a=0.02,d=0.18,s=0.35,r=0.35;
+      g.gain.cancelScheduledValues(t);
+      g.gain.setValueAtTime(0, t);
+      g.gain.linearRampToValueAtTime(0.9, t + a);
+      g.gain.linearRampToValueAtTime(s, t + a + d);
+      g.gain.linearRampToValueAtTime(0.0, t + a + d + r);
+    }
+    function setFreq(freq, t){ [oscA, oscB, oscC].forEach(o => o.frequency.setValueAtTime(freq, t)); }
+    function trigger(freq, t){ setFreq(freq, t); env(t); }
+    function triggerChord(freqs, t){
+      const spread = 0.012;
+      freqs.forEach((f, i) => { const ti = t + i * spread; setFreq(f, ti); env(ti); });
+    }
+    function setNoise(amount){ airG.gain.value = 0.15 * amount; lp.frequency.value = 1400 + 1400 * amount; }
+    function setLevel(v){ out.gain.value = Math.max(0, Math.min(1, v)); }
+    function stop(when = ctx.currentTime){ try{ oscA.stop(when+0.1); oscB.stop(when+0.1); oscC.stop(when+0.1);}catch(e){} }
+    return { trigger, triggerChord, setNoise, setLevel, stop };
   }
 
+  // SAFE plucked guitar (fallback if no samples)
+  function makeGuitarPluck() {
+    const bp = ctx.createBiquadFilter();   bp.type = "bandpass"; bp.Q.value = 25;
+    const lp = ctx.createBiquadFilter();   lp.type = "lowpass";  lp.frequency.value = 2400;
+    const amp = ctx.createGain();          amp.gain.value = 0;
+    bp.connect(lp).connect(amp);
+
+    // output bus
+    const out = ctx.createGain(); out.gain.value = 1;
+    amp.connect(out);
+    const send = ctx.createGain(); send.gain.value = 0.20;
+    out.connect(master); out.connect(send); send.connect(reverb);
+
+    const noiseBuf = (() => {
+      const len = Math.floor(ctx.sampleRate * 0.02);
+      const b = ctx.createBuffer(1, len, ctx.sampleRate);
+      const d = b.getChannelData(0); for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+      return b;
+    })();
+
+    let noiseAmount = 0.5;
+
+    function trigger(freq, t) {
+      const f = Math.max(70, Math.min(1200, freq));
+      bp.frequency.setValueAtTime(f, t);
+      lp.frequency.setValueAtTime(1800 + 1000 * (f / 1200), t);
+
+      const src = ctx.createBufferSource(); src.buffer = noiseBuf;
+      const hp = ctx.createBiquadFilter(); hp.type = "highpass"; hp.frequency.value = 200 + 1500 * noiseAmount;
+      src.connect(hp).connect(bp);
+      src.start(t); src.stop(t + 0.03);
+
+      const a = 0.002, d = 0.12, r = 0.60;
+      const g = amp.gain;
+      g.cancelScheduledValues(t);
+      g.setValueAtTime(0, t);
+      g.linearRampToValueAtTime(0.9, t + a);
+      g.linearRampToValueAtTime(0.35, t + a + d);
+      g.exponentialRampToValueAtTime(0.0001, t + a + d + r);
+    }
+    function setNoise(amount){
+      noiseAmount = Math.max(0, Math.min(1, amount));
+      bp.Q.setTargetAtTime(20 + 10 * (1 - noiseAmount), ctx.currentTime, 0.05);
+      lp.frequency.setTargetAtTime(1800 + 1400 * noiseAmount, ctx.currentTime, 0.05);
+      send.gain.setTargetAtTime(0.16 + 0.10 * (1 - noiseAmount), ctx.currentTime, 0.05);
+    }
+    function setLevel(v){ out.gain.value = Math.max(0, Math.min(1, v)); }
+    function stop(when = ctx.currentTime){ amp.gain.cancelScheduledValues(when); amp.gain.setTargetAtTime(0, when, 0.03); }
+    return { trigger, setNoise, setLevel, stop };
+  }
+
+  // Sampled guitar chords (auto-used if at least one chord file loads)
+  function makeGuitarSampled() {
+    const out = ctx.createGain(); out.gain.value = 1; out.connect(master);
+    const send = ctx.createGain(); send.gain.value = 0.22; out.connect(send); send.connect(reverb);
+
+    let lastVoice = null; let level = 1; let noise = 0.5;
+
+    function chooseChord(){
+      const pool = ['Cmaj7','Am7','Fmaj7','G7','Dm7','Em7'];
+      // prefer ones that actually loaded
+      const avail = pool.filter(n => ChordSampler.has(n));
+      const use = (avail.length ? avail : pool);
+      return use[Math.floor(Math.random() * use.length)];
+    }
+    function trigger(_ignored, t){
+      const name = chooseChord();
+      if (lastVoice && lastVoice.stop) lastVoice.stop(t); // avoid overlap spam
+      // play at unity into reverb/master; control overall level via 'out'
+      lastVoice = ChordSampler.play(name, t, 1.0);
+    }
+    function setLevel(v){ level = Math.max(0, Math.min(1, v)); out.gain.value = level; }
+    function setNoise(a){ noise = a; /* reserved for future crossfades */ }
+    function stop(when = ctx.currentTime){ if (lastVoice && lastVoice.stop) lastVoice.stop(when); }
+    return { trigger, setLevel, setNoise, stop };
+  }
+
+  // Drums (house) with per-activation randomisation & swing + noise amount
+  function makeDrums(seed) {
+    const noiseBuffer = (() => {
+      const len = ctx.sampleRate * 1.0;
+      const buffer = ctx.createBuffer(1, len, ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < len; i++) data[i] = Math.random() * 2 - 1;
+      return buffer;
+    })();
+
+    // instance bus (for volume control)
+    const bus = ctx.createGain(); bus.gain.value = 1; bus.connect(master);
+
+    // randomised character
+    let kickBase = 140 + 40 * Math.random();
+    let swingAmt = 0.04 * Math.random();  // 0..40ms swing
+    let hatOpenChance = 0.08 + 0.12 * Math.random();
+    let clapVar = 0.6 + 0.2 * Math.random();
+    let noiseAmt = 0.5;
+
+    function kick(t) {
+      const osc = ctx.createOscillator();
+      const g = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(kickBase, t);
+      osc.frequency.exponentialRampToValueAtTime(50, t + 0.22);
+      g.gain.setValueAtTime(0.9, t);
+      g.gain.exponentialRampToValueAtTime(0.001, t + 0.26);
+      osc.connect(g).connect(bus);
+      osc.start(t); osc.stop(t + 0.32);
+    }
+    function clap(t) {
+      const src = ctx.createBufferSource(); src.buffer = noiseBuffer;
+      const bp = ctx.createBiquadFilter(); bp.type = "bandpass"; bp.frequency.value = 1800; bp.Q.value = 0.7;
+      const g = ctx.createGain(); g.gain.setValueAtTime(clapVar * noiseAmt, t);
+      g.gain.exponentialRampToValueAtTime(0.001, t + 0.12);
+      src.connect(bp).connect(g).connect(bus);
+      src.start(t); src.stop(t + 0.18);
+    }
+    function hat(t, open = false) {
+      const src = ctx.createBufferSource(); src.buffer = noiseBuffer;
+      const hp = ctx.createBiquadFilter(); hp.type = "highpass"; hp.frequency.value = 8000;
+      const g = ctx.createGain();
+      const lv = open ? (0.38 * noiseAmt) : (0.22 * noiseAmt);
+      g.gain.setValueAtTime(lv, t);
+      g.gain.exponentialRampToValueAtTime(0.001, t + (open ? 0.25 : 0.05));
+      src.connect(hp).connect(g).connect(bus);
+      src.start(t); src.stop(t + (open ? 0.3 : 0.08));
+    }
+    function setNoise(amount){ noiseAmt = Math.max(0, Math.min(1, amount)); }
+    function setLevel(v){ bus.gain.value = Math.max(0, Math.min(1, v)); }
+
+    function swingTime(nextTime, isOffbeat, step){
+      if (!isOffbeat) return nextTime;
+      return nextTime + swingAmt * step; // delay off-beats slightly
+    }
+
+    return { kick, clap, hat, setNoise, setLevel, swingTime, hatOpenChance };
+  }
+
+  /* ========= Loop scheduler ========= */
   function startLoop(point){
     const baseSeed = Math.abs(Math.floor(point.lat*1000)+Math.floor(point.lng*1000));
-    const seed = baseSeed + (Date.now() % 997);
+    // different every activation → add random time component
+    const seed = baseSeed + Math.floor(Math.random() * 1000000);
 
     const scaleName = ['major','dorian','pent'][Math.floor(seededRand(baseSeed)*3)];
-    const scale = scales[scaleName];
+    const chosenScale = scales[scaleName] || scales.major;
+
     const baseMidi = 58 + Math.floor(seededRand(baseSeed+7)*12);
-    const tempo = 150 + Math.floor(seededRand(seed+9)*60);
-    const step = 60/tempo;   // 8th
-    const barBeats = 8;      // 4/4 in 8ths
-    const voice = makeVoice(seed);
+    const tempo = 128 + Math.floor(Math.random()*40); // randomised tempo per activation
+    const step = 60/tempo;     // 8th
+    const barBeats = 8;        // 4/4 in 8ths
+
+    const isGreater  = point.category === "Greater Melbourne";
+    const isCentral  = point.category === "Central Melbourne";
+    const isLandmark = point.category === "Landmarks";
+
+    // prefer sampled chords if any loaded, else safe pluck
+    const voice = (isCentral ? makeKeysEnsemble(seed)
+                 : (isLandmark ? (ChordSampler.anyLoaded() ? makeGuitarSampled() : makeGuitarPluck())
+                 : null));
+    const drums = isGreater ? makeDrums(seed) : null;
 
     let nextNoteIdx = 0;
     let nextTime = ctx.currentTime + 0.05;
 
     function schedule(){
       while (nextTime < ctx.currentTime + SCHEDULE_AHEAD){
-        const idx  = Math.floor(seededRand(seed + nextNoteIdx) * scale.length);
-        const hop  = Math.random() < 0.2 ? 12 : 0;
-        const midi = baseMidi + scale[idx] + hop;
-        voice.trigger(noteFreq(midi), nextTime);
+        if (voice) {
+          if (isCentral && typeof voice.triggerChord === "function") {
+            const deg = Math.floor(seededRand(seed + nextNoteIdx) * chosenScale.length);
+            const d0 = chosenScale[deg];
+            const d1 = chosenScale[(deg + 2) % chosenScale.length];
+            const d2 = chosenScale[(deg + 4) % chosenScale.length];
+            const add7 = Math.random() < 0.25;
+            const d7 = chosenScale[(deg + 6) % chosenScale.length];
+            const rootMidi = baseMidi;
+            const chordMidis = [rootMidi + d0, rootMidi + d1, rootMidi + d2];
+            if (add7) chordMidis.push(rootMidi + d7);
+            const freqs = chordMidis.map(m => noteFreq(m));
+            voice.triggerChord(freqs, nextTime);
+          } else if (isLandmark) {
+            // play a chord once per bar for realism
+            if (nextNoteIdx === 0) voice.trigger(0, nextTime);
+          } else {
+            const idx  = Math.floor(seededRand(seed + nextNoteIdx) * chosenScale.length);
+            const midi = baseMidi + chosenScale[idx];
+            voice.trigger(noteFreq(midi), nextTime);
+          }
+        }
+
+        // House drums only for Greater Melbourne (with swing + random hats)
+        if (drums) {
+          const beat8 = nextNoteIdx % barBeats; // 0..7
+          const beat4 = Math.floor(beat8 / 2);  // 0..3
+          const isOff = (beat8 % 2 === 1);
+
+          const t2 = drums.swingTime(nextTime, isOff, step);
+
+          if (!isOff) drums.kick(t2);                         // 1-2-3-4
+          if (beat4 === 1 || beat4 === 3) drums.clap(t2);     // 2 & 4
+          if (isOff) {
+            drums.hat(t2, false);
+            if (Math.random() < drums.hatOpenChance) drums.hat(t2, true);
+          }
+        }
+
         nextTime += step;
         nextNoteIdx = (nextNoteIdx + 1) % barBeats;
       }
     }
+
     const id = point.id || `${point.lat.toFixed(3)}_${point.lng.toFixed(3)}`;
     point.id = id;
 
+    const params = { noiseAmt: 0.5, level: 1.0 };
     const timer = setInterval(schedule, TICK_MS);
-    active.set(id, { voice, timer, point, meta:{scaleName, tempo} });
+    active.set(id, { voice, drums, timer, point, params, meta:{scaleName, tempo} });
 
-    // send full payload incl. signature for the list
     emit('start', {
       id,
       name: point.name || 'Untitled',
@@ -574,7 +839,7 @@ const AudioEngine = (() => {
     const entry = active.get(id);
     if (!entry) return;
     clearInterval(entry.timer);
-    entry.voice.stop();
+    if (entry.voice && entry.voice.stop) entry.voice.stop();
     active.delete(id);
     emit('stop', { id });
   }
@@ -582,14 +847,30 @@ const AudioEngine = (() => {
   function stopAll(){ Array.from(active.keys()).forEach(stopLoop); }
 
   function toggleForPoint(point){
-    if (ctx.state === 'suspended') ctx.resume(); // autoplay gate
+    if (ctx.state === 'suspended') ctx.resume();
     const id = point.id || `${point.lat.toFixed(3)}_${point.lng.toFixed(3)}`;
     point.id = id;
     if (active.has(id)) stopLoop(id);
     else startLoop(point);
   }
 
-  return { toggleForPoint, stopAll, on };
+  // live parameter control
+  function setNoise(id, amt0to1){
+    const e = active.get(id);
+    if (!e) return;
+    e.params.noiseAmt = Math.max(0, Math.min(1, amt0to1));
+    if (e.voice && e.voice.setNoise) e.voice.setNoise(e.params.noiseAmt);
+    if (e.drums && e.drums.setNoise) e.drums.setNoise(e.params.noiseAmt);
+  }
+  function setLevel(id, v){
+    const e = active.get(id);
+    if (!e) return;
+    e.params.level = Math.max(0, Math.min(1, v));
+    if (e.voice && e.voice.setLevel) e.voice.setLevel(e.params.level);
+    if (e.drums && e.drums.setLevel) e.drums.setLevel(e.params.level);
+  }
+
+  return { toggleForPoint, stopAll, on, stop: stopLoop, setNoise, setLevel };
 })();
 
 /* ================== Now Playing UI binder ================== */
@@ -615,15 +896,32 @@ const AudioEngine = (() => {
     meta.className = 'np-meta';
     meta.textContent = signature || `${point.lat.toFixed(3)}, ${point.lng.toFixed(3)}`;
 
+    // --- Volume slider (0..100) ---
+    const sliderWrap = document.createElement('div');
+    sliderWrap.className = 'np-slider';
+    sliderWrap.innerHTML = `<input type="range" min="0" max="100" value="100" aria-label="Volume">`;
+    const slider = sliderWrap.querySelector('input');
+
+    // prevent row click toggle
+    ['pointerdown','mousedown','touchstart','click'].forEach(ev => {
+      slider.addEventListener(ev, (e) => e.stopPropagation());
+    });
+
+    slider.addEventListener('input', () => {
+      const v = slider.value / 100;
+      AudioEngine.setLevel(id, v);
+    });
+
     left.appendChild(title);
     left.appendChild(meta);
+    left.appendChild(sliderWrap);
 
     const stop = document.createElement('button');
     stop.className = 'np-stop';
     stop.textContent = 'Stop';
     stop.addEventListener('click', (e) => {
       e.stopPropagation();
-      AudioEngine.toggleForPoint(point);
+      AudioEngine.stop(id); // stop by exact id
     });
 
     li.appendChild(left);
