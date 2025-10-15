@@ -468,4 +468,53 @@ html, body{
   min-width: 90px;
 }
 
+/* ========== Now Playing widget ========== */
+.np{
+  width: var(--widget-width);
+  box-sizing: border-box;
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border-radius: 22px;
+  color: #fff;
+  background: radial-gradient(160% 160% at 15% 10%, #232427 0%, #151619 60%, #101114 100%);
+  box-shadow: 0 14px 34px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.06);
+  font-family: 'DM Sans', system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+  font-size: 12px;
+}
+
+.np-header{
+  display:flex; align-items:center; justify-content:space-between;
+}
+
+.np-left{ display:flex; align-items:center; gap:8px; }
+.np-dot{
+  width:10px; height:10px; border-radius:50%;
+  background: rgba(255,216,77,0.95);
+  box-shadow: 0 0 8px rgba(255,216,77,.9), 0 0 18px rgba(255,216,77,.8);
+}
+.np-title{ font-weight:800; letter-spacing:.2px; }
+
+.np-clear{
+  padding:6px 10px; border-radius:10px; border:1px solid rgba(255,255,255,.1);
+  background: rgba(255,255,255,.06); color:#fff; cursor:pointer;
+}
+.np-clear:hover{ background: rgba(255,255,255,.12); }
+
+.np-list{ list-style:none; padding:0; margin:0; display:grid; gap:6px; }
+
+.np-item{
+  display:grid; grid-template-columns: 1fr auto; align-items:center; gap:8px;
+  padding:8px 10px; border-radius:12px;
+  background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.06);
+}
+.np-name{ font-weight:700; }
+.np-meta{ opacity:.8; font-size:11px; }
+
+.np-stop{
+  padding:6px 12px; border-radius:10px; border:1px solid rgba(255,255,255,.1);
+  background:#2f3542; color:#fff; cursor:pointer;
+}
+.np-stop:hover{ background:#3a4150; }
 

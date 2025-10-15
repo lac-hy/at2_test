@@ -29,12 +29,9 @@ L.polyline(
 ).addTo(map);
 
 /* ==================== DAY / NIGHT MAP STYLE ==================== */
-
-/* ==================== DAY / NIGHT MAP STYLE ==================== */
-const DAY_START_HOUR   = 7;   // 07:00 AM
+const DAY_START_HOUR   = 7;
 const DAY_START_MINUTE = 0;
-
-const NIGHT_START_HOUR   = 18;  // 06:00 PM
+const NIGHT_START_HOUR   = 18;
 const NIGHT_START_MINUTE = 0;
 
 function getIsDay() {
@@ -47,39 +44,26 @@ function getIsDay() {
   const nightStart = NIGHT_START_HOUR * 60 + NIGHT_START_MINUTE;
 
   if (dayStart < nightStart) {
-    // e.g. 07:00 → 15:45
     return minsNow >= dayStart && minsNow < nightStart;
   } else {
-    // spans midnight case
     return minsNow >= dayStart || minsNow < nightStart;
   }
 }
 
 function setMapStyle() {
   const title = document.getElementById("bigTitle");
-
   if (getIsDay()) {
     map.addLayer(lightTiles);
     map.removeLayer(darkTiles);
-
-    if (title) {
-      title.style.color = "#353535"; // dark grey for day
-      title.style.opacity = "0.4";    // semi-transparent
-    }
+    if (title) { title.style.color = "#353535"; title.style.opacity = "0.4"; }
   } else {
     map.addLayer(darkTiles);
     map.removeLayer(lightTiles);
-
-    if (title) {
-      title.style.color = "#ffd84d"; // light grey/white for night
-      title.style.opacity = "0.6";    // semi-transparent
-    }
+    if (title) { title.style.color = "#ffd84d"; title.style.opacity = "0.6"; }
   }
 }
-
 setMapStyle();
-setInterval(setMapStyle, 1 * 60 * 1000); // check every 1 minutes
-
+setInterval(setMapStyle, 60 * 1000);
 
 /* =========================== POIs ============================== */
 const POIS = [
@@ -113,9 +97,15 @@ const POIS = [
   { name:"Melb Central",  lat:-37.8107, lng:144.9627, category:"Landmarks",         video:"markets.mp4",          signature:"Busy Crowds & Clock Chimes"},
 ];
 
+/* hook glow dots: open glass + toggle sound (no visual changes) */
 function addGlowingDot(poi) {
   const dotIcon = L.divIcon({ html: '<div class="glow-dot"></div>', className: '', iconSize: [16, 16] });
-  L.marker([poi.lat, poi.lng], { icon: dotIcon }).addTo(map).on("click", () => openGlass(poi));
+  L.marker([poi.lat, poi.lng], { icon: dotIcon })
+    .addTo(map)
+    .on("click", () => {
+      openGlass(poi);
+      AudioEngine.toggleForPoint(poi);
+    });
 }
 POIS.forEach(addGlowingDot);
 
@@ -169,9 +159,7 @@ const WX_CODE = {
   77:["Snow grains","❄️"],80:["Light showers","🌦️"],81:["Showers","🌦️"],82:["Heavy showers","🌧️"],
   85:["Snow showers","❄️"],86:["Snow showers","❄️"],95:["Thunderstorm","⛈️"],96:["Thunderstorm","⛈️"],99:["Thunderstorm","⛈️"]
 };
-function dayShortName(iso) {
-  return new Date(iso + "T12:00:00").toLocaleDateString(undefined, { weekday: "short" });
-}
+function dayShortName(iso) { return new Date(iso + "T12:00:00").toLocaleDateString(undefined, { weekday: "short" }); }
 function renderWeather(data) {
   const [label, emoji] = WX_CODE[data.now.code] || ["", "⛅"];
   document.getElementById("wx-city").textContent = data.city || MELB.label;
@@ -257,72 +245,15 @@ async function reverseGeocode(lat, lon) {
   new ResizeObserver(apply).observe(wx);
 })();
 
-/* ===================== SIMPLE PLAYER (demo) ==================== */
-const PLAYLIST = [
-  { title:"Work In Progress",    handle:"@lach.studio", avatar:"https://picsum.photos/seed/artist/40",  art:"https://picsum.photos/seed/cover1/800/800", src:"assets/sample1.mp3" },
-  { title:"Another Clip", handle:"@soundscape", avatar:"https://picsum.photos/seed/artist2/40", art:"https://picsum.photos/seed/cover2/800/800", src:"assets/sample2.mp3" }
-];
-const el = {
-  audio: document.getElementById("plAudio"),
-  play: document.getElementById("plPlay"),
-  prev: document.getElementById("plPrev"),
-  next: document.getElementById("plNext"),
-  progress: document.getElementById("plProgress"),
-  cur: document.getElementById("plCurrent"),
-  dur: document.getElementById("plDuration"),
-  name: document.getElementById("plName"),
-  handle: document.getElementById("plHandle"),
-  avatar: document.getElementById("plAvatar"),
-  art: document.getElementById("plArt"),
-};
-let idx = 0; let isPlaying = false;
-function load(i) {
-  idx = (i + PLAYLIST.length) % PLAYLIST.length;
-  const t = PLAYLIST[idx];
-  el.audio.src = t.src;
-  el.name.textContent = t.title;
-  el.handle.textContent = t.handle;
-  el.avatar.src = t.avatar;
-  el.art.src = t.art;
-  el.progress.value = 0;
-  el.cur.textContent = "0:00";
-  el.dur.textContent = "-0:00";
-}
-function fmt(s) { const n = Math.max(0, Math.floor(s)); return `${Math.floor(n/60)}:${(n%60).toString().padStart(2,"0")}`; }
-function play() {
-  el.audio.play().then(() => { isPlaying = true; el.play.textContent = "⏸"; el.play.classList.add("is-playing"); }).catch(console.warn);
-}
-function pause() { el.audio.pause(); isPlaying = false; el.play.textContent = "▶︎"; el.play.classList.remove("is-playing"); }
-el.play.addEventListener("click", () => (isPlaying ? pause() : play()));
-el.prev.addEventListener("click", () => { load(idx - 1); play(); });
-el.next.addEventListener("click", () => { load(idx + 1); play(); });
-el.audio.addEventListener("loadedmetadata", () => {
-  el.progress.max = Math.floor(el.audio.duration || 0);
-  el.dur.textContent = `-${fmt((el.audio.duration || 0) - (el.audio.currentTime || 0))}`;
-});
-el.audio.addEventListener("timeupdate", () => {
-  el.progress.value = Math.floor(el.audio.currentTime || 0);
-  el.cur.textContent = fmt(el.audio.currentTime || 0);
-  const rem = (el.audio.duration || 0) - (el.audio.currentTime || 0);
-  el.dur.textContent = `-${fmt(rem)}`;
-});
-el.progress.addEventListener("input", () => { el.audio.currentTime = Number(el.progress.value || 0); });
-el.audio.addEventListener("ended", () => { load(idx + 1); play(); });
-load(0);
-
 /* ========== SLICED-SUN VISUALISER (flowy colour + robust blur) ========= */
 (function slicedSun() {
   const canvas = document.getElementById("sunCanvas");
   if (!canvas) return;
 
-  // on-screen (CSS px drawing via transform)
   const ctx = canvas.getContext("2d", { alpha: false });
-
-  // offscreen: scrolling colour buffer & stage
   const buffer = document.createElement("canvas");  const bctx = buffer.getContext("2d");
   const stage  = document.createElement("canvas");  const sctx = stage.getContext("2d");
 
-  // grain
   const grain = document.createElement("canvas");
   grain.width = grain.height = 128;
   const gctx = grain.getContext("2d");
@@ -337,27 +268,21 @@ load(0);
   })();
   let grainPattern = null;
 
-  // tunables
   const STRIPES   = 23;
-  const GAP_CSS   = 3;      // px between stripes (CSS px)
-  const SPEED_CSS = 36;     // scroll speed (CSS px/sec)
+  const GAP_CSS   = 3;
+  const SPEED_CSS = 36;
 
-  // blur init from CSS var (if present)
   const cssDefault = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--sun-blur"));
   let BLUR_PX = Number.isFinite(cssDefault) ? Math.max(0, cssDefault) : 20;
 
-  // expose setter + keep CSS fallback in sync
   window.setSunBlur = (px) => {
     BLUR_PX = Math.max(0, Number(px) || 0);
     document.documentElement.style.setProperty("--sun-blur", String(BLUR_PX));
-    // also update CSS filter fallback immediately
     canvas.style.filter = BLUR_PX > 0 ? `blur(${BLUR_PX}px)` : "none";
   };
 
-  // detect canvas filter support once
   const supportsCanvasFilter = typeof ctx.filter === "string";
 
-  // DPR-safe sizing
   function fit() {
     const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
     const r = canvas.getBoundingClientRect();
@@ -373,7 +298,6 @@ load(0);
 
     grainPattern = ctx.createPattern(grain, "repeat");
 
-    // ensure CSS fallback reflects initial value
     if (!supportsCanvasFilter) {
       canvas.style.filter = BLUR_PX > 0 ? `blur(${BLUR_PX}px)` : "none";
     }
@@ -381,7 +305,6 @@ load(0);
   window.addEventListener("resize", fit, { passive: true });
   fit();
 
-  // static ambience (top/bottom warm glows)
   function paintStaticBackdrop() {
     const W = buffer.width, H = buffer.height;
     bctx.fillStyle = "#0b0c0d"; bctx.fillRect(0, 0, W, H);
@@ -397,10 +320,8 @@ load(0);
     bctx.fillStyle = botG; bctx.fillRect(0, H * 0.4, W, H * 0.6);
   }
 
-  // helper noise
   function fNoise(t, a = 1, b = 0) { return 0.5 + 0.5 * Math.sin(t * a + b); }
 
-  // flowy core repainted each frame
   function paintDynamicCore(t) {
     paintStaticBackdrop();
 
@@ -410,7 +331,6 @@ load(0);
     const R0 = Math.min(W, H);
     const R = R0 * (0.40 + 0.03 * Math.sin(t * 0.9));
 
-    // purple core → warm rim
     const g = bctx.createRadialGradient(cx, cy, 0, cx, cy, R);
     const breath = 0.75 + 0.2 * Math.sin(t * 1.3);
     g.addColorStop(0.00, `rgba(170,120,255,${0.95 * breath})`);
@@ -419,7 +339,6 @@ load(0);
     g.addColorStop(1.00, "rgba(255,120,70,0.00)");
     bctx.fillStyle = g; bctx.beginPath(); bctx.arc(cx, cy, R, 0, Math.PI * 2); bctx.fill();
 
-    // outer bloom
     const Rb = R * 1.30;
     const g2 = bctx.createRadialGradient(cx, cy, R * 0.65, cx, cy, Rb);
     g2.addColorStop(0.00, "rgba(255,108,64,0.00)");
@@ -427,7 +346,6 @@ load(0);
     g2.addColorStop(1.00, "rgba(255,108,64,0.00)");
     bctx.fillStyle = g2; bctx.beginPath(); bctx.arc(cx, cy, Rb, 0, Math.PI * 2); bctx.fill();
 
-    // animated shafts
     bctx.save();
     bctx.globalCompositeOperation = "lighter";
     for (let i = 0; i < 3; i++) {
@@ -444,11 +362,10 @@ load(0);
       bctx.fillStyle = lg;
       bctx.fillRect(-W, -R * sway, 2 * W, R * sway * 2);
 
-      bctx.setTransform(1, 0, 0, 1, 0, 0); // reset
+      bctx.setTransform(1, 0, 0, 1, 0, 0);
     }
     bctx.restore();
 
-    // faint rings
     bctx.save();
     bctx.strokeStyle = "rgba(255,150,100,0.15)";
     bctx.lineWidth   = Math.max(1, R * 0.015);
@@ -462,27 +379,22 @@ load(0);
     bctx.restore();
   }
 
-  // scrolling & render
   let scroll = 0; let lastT = performance.now();
-
   function draw() {
     const now = performance.now();
     const dt  = (now - lastT) * 0.001; lastT = now;
     const t   = now * 0.001;
 
-    // repaint flowy colour into buffer
     paintDynamicCore(t);
 
     const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
-    const W = stage.width, H = stage.height; // device px
-    const w = W / dpr,     h = H / dpr;      // CSS px for ctx
+    const W = stage.width, H = stage.height;
+    const w = W / dpr,     h = H / dpr;
     const GAP   = GAP_CSS * dpr;
     const SPEED = SPEED_CSS * dpr;
 
-    // stage background
     sctx.fillStyle = "#0b0c0d"; sctx.fillRect(0, 0, W, H);
 
-    // stripes (fixed slots, moving colour)
     const bandH = (H - (STRIPES - 1) * GAP) / STRIPES;
     const srcH  = buffer.height;
     scroll = (scroll + SPEED * dt) % srcH;
@@ -496,7 +408,7 @@ load(0);
 
       sctx.save();
       sctx.beginPath();
-      sctx.rect(0, dy, W + 1, sh); // +1 avoids seam
+      sctx.rect(0, dy, W + 1, sh);
       sctx.clip();
 
       const take = Math.min(sh, srcH - sy);
@@ -508,7 +420,6 @@ load(0);
       sctx.restore();
     }
 
-    // stage overlays
     const topV = sctx.createLinearGradient(0, 0, 0, H * 0.33);
     topV.addColorStop(0, "rgba(255,110,70,0.40)");
     topV.addColorStop(1, "rgba(255,110,70,0.00)");
@@ -519,19 +430,16 @@ load(0);
     botV.addColorStop(1, "rgba(255,110,70,0.40)");
     sctx.fillStyle = botV; sctx.fillRect(0, H * 0.67, W, H * 0.33);
 
-    // ===== blit to screen with robust blur =====
     ctx.clearRect(0, 0, w, h);
-    if (supportsCanvasFilter) {
+    if (typeof ctx.filter === "string") {
       ctx.filter = BLUR_PX > 0 ? `blur(${BLUR_PX}px)` : "none";
       ctx.drawImage(stage, 0, 0, w, h);
       ctx.filter = "none";
     } else {
-      // CSS fallback (kept in sync by setSunBlur/fit)
       canvas.style.filter = BLUR_PX > 0 ? `blur(${BLUR_PX}px)` : "none";
       ctx.drawImage(stage, 0, 0, w, h);
     }
 
-    // grain on top (sharp)
     if (grainPattern) {
       ctx.globalCompositeOperation = "soft-light";
       ctx.globalAlpha = 0.08;
@@ -543,24 +451,197 @@ load(0);
 
     requestAnimationFrame(draw);
   }
-
-  // kick off
   requestAnimationFrame(draw);
 })();
 
+/* ===================== CLOCK ===================== */
 function updateClock() {
   const now = new Date();
   let hours = now.getHours();
   const minutes = now.getMinutes();
   const ampm = hours >= 12 ? "PM" : "AM";
-
-  hours = hours % 12;
-  hours = hours ? hours : 12; // 0 → 12
-
+  hours = hours % 12; hours = hours ? hours : 12;
   document.getElementById("hours").textContent = String(hours).padStart(2, "0");
   document.getElementById("minutes").textContent = String(minutes).padStart(2, "0");
   document.getElementById("ampm").textContent = ampm;
 }
-
 setInterval(updateClock, 1000);
 updateClock();
+
+/* -------------------------------------------------
+   WebAudio-based generative melody system (looping)
+   ------------------------------------------------- */
+const AudioEngine = (() => {
+  const Ctx = window.AudioContext || window.webkitAudioContext;
+  const ctx = new Ctx();
+  const master = ctx.createGain();
+  master.gain.value = 0.75;
+  master.connect(ctx.destination);
+
+  const listeners = { start: [], stop: [] };
+  const emit = (evt, payload) => (listeners[evt] || []).forEach(cb => cb(payload));
+  const on   = (evt, cb) => { if (listeners[evt]) listeners[evt].push(cb); };
+
+  const active = new Map(); // id -> { voice, timer, point }
+
+  const SCHEDULE_AHEAD = 0.15, TICK_MS = 50;
+  const scales = {
+    major:  [0,2,4,5,7,9,11,12],
+    dorian: [0,2,3,5,7,9,10,12],
+    pent:   [0,3,5,7,10,12],
+  };
+
+  const seededRand = (seed) => { let x = Math.sin(seed) * 10000; return x - Math.floor(x); };
+  const noteFreq   = (midi) => 440 * Math.pow(2, (midi - 69) / 12);
+
+  function makeVoice(seed){
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    const filt = ctx.createBiquadFilter();
+    const delay = ctx.createDelay(0.6);
+    const fb = ctx.createGain();
+
+    osc.type = ['sine','triangle','sawtooth'][Math.floor(seededRand(seed)*3)];
+    gain.gain.value = 0;
+    filt.type = 'lowpass';
+    filt.frequency.value = 1000 + 1000 * seededRand(seed + 2);
+    delay.delayTime.value = 0.18 + 0.12 * seededRand(seed + 3);
+    fb.gain.value = 0.22 + 0.22 * seededRand(seed + 4);
+
+    osc.connect(gain); gain.connect(filt);
+    filt.connect(delay); delay.connect(fb).connect(delay);
+    filt.connect(master); delay.connect(master);
+    osc.start();
+
+    function trigger(freq, t){
+      const a=0.01,d=0.10,s=0.16,r=0.20, g=gain.gain;
+      osc.frequency.setValueAtTime(freq, t);
+      g.cancelScheduledValues(t);
+      g.setValueAtTime(0, t);
+      g.linearRampToValueAtTime(0.85, t + a);
+      g.linearRampToValueAtTime(0.55, t + a + d);
+      g.linearRampToValueAtTime(0.55, t + a + d + s);
+      g.linearRampToValueAtTime(0.0, t + a + d + s + r);
+    }
+    function stop(when = ctx.currentTime){
+      gain.gain.linearRampToValueAtTime(0, when + 0.1);
+      setTimeout(() => { try{ osc.stop(); } catch(e){} }, 400);
+    }
+    return { trigger, stop };
+  }
+
+  function startLoop(point){
+    const baseSeed = Math.abs(Math.floor(point.lat*1000)+Math.floor(point.lng*1000));
+    const seed = baseSeed + (Date.now() % 997);
+
+    const scaleName = ['major','dorian','pent'][Math.floor(seededRand(baseSeed)*3)];
+    const scale = scales[scaleName];
+    const baseMidi = 58 + Math.floor(seededRand(baseSeed+7)*12);
+    const tempo = 150 + Math.floor(seededRand(seed+9)*60);
+    const step = 60/tempo;   // 8th
+    const barBeats = 8;      // 4/4 in 8ths
+    const voice = makeVoice(seed);
+
+    let nextNoteIdx = 0;
+    let nextTime = ctx.currentTime + 0.05;
+
+    function schedule(){
+      while (nextTime < ctx.currentTime + SCHEDULE_AHEAD){
+        const idx  = Math.floor(seededRand(seed + nextNoteIdx) * scale.length);
+        const hop  = Math.random() < 0.2 ? 12 : 0;
+        const midi = baseMidi + scale[idx] + hop;
+        voice.trigger(noteFreq(midi), nextTime);
+        nextTime += step;
+        nextNoteIdx = (nextNoteIdx + 1) % barBeats;
+      }
+    }
+    const id = point.id || `${point.lat.toFixed(3)}_${point.lng.toFixed(3)}`;
+    point.id = id;
+
+    const timer = setInterval(schedule, TICK_MS);
+    active.set(id, { voice, timer, point, meta:{scaleName, tempo} });
+
+    // send full payload incl. signature for the list
+    emit('start', {
+      id,
+      name: point.name || 'Untitled',
+      signature: point.signature || `${point.lat.toFixed(3)}, ${point.lng.toFixed(3)}`,
+      point
+    });
+  }
+
+  function stopLoop(id){
+    const entry = active.get(id);
+    if (!entry) return;
+    clearInterval(entry.timer);
+    entry.voice.stop();
+    active.delete(id);
+    emit('stop', { id });
+  }
+
+  function stopAll(){ Array.from(active.keys()).forEach(stopLoop); }
+
+  function toggleForPoint(point){
+    if (ctx.state === 'suspended') ctx.resume(); // autoplay gate
+    const id = point.id || `${point.lat.toFixed(3)}_${point.lng.toFixed(3)}`;
+    point.id = id;
+    if (active.has(id)) stopLoop(id);
+    else startLoop(point);
+  }
+
+  return { toggleForPoint, stopAll, on };
+})();
+
+/* ================== Now Playing UI binder ================== */
+(() => {
+  const list = document.getElementById('npList');
+  const clearBtn = document.getElementById('npClear');
+  if (!list || !clearBtn) return;
+
+  const items = new Map(); // id -> <li>
+
+  function makeItem({ id, name, signature, point }) {
+    const li = document.createElement('li');
+    li.className = 'np-item';
+    li.dataset.id = id;
+
+    const left = document.createElement('div');
+
+    const title = document.createElement('div');
+    title.className = 'np-name';
+    title.textContent = name || 'Untitled';
+
+    const meta = document.createElement('div');
+    meta.className = 'np-meta';
+    meta.textContent = signature || `${point.lat.toFixed(3)}, ${point.lng.toFixed(3)}`;
+
+    left.appendChild(title);
+    left.appendChild(meta);
+
+    const stop = document.createElement('button');
+    stop.className = 'np-stop';
+    stop.textContent = 'Stop';
+    stop.addEventListener('click', (e) => {
+      e.stopPropagation();
+      AudioEngine.toggleForPoint(point);
+    });
+
+    li.appendChild(left);
+    li.appendChild(stop);
+    li.addEventListener('click', () => AudioEngine.toggleForPoint(point));
+    return li;
+  }
+
+  AudioEngine.on('start', payload => {
+    const li = makeItem(payload);
+    items.set(payload.id, li);
+    list.appendChild(li);
+  });
+
+  AudioEngine.on('stop', ({ id }) => {
+    const li = items.get(id);
+    if (li) { li.remove(); items.delete(id); }
+  });
+
+  clearBtn.addEventListener('click', () => AudioEngine.stopAll());
+})();

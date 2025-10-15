@@ -34,36 +34,21 @@
     <div id="sun-slices" class="viz-slices">
   <canvas id="sunCanvas"></canvas>
 </div>
-    <!-- Music Player -->
-    <div id="music-widget" class="player">
-      <div class="pl-top">
-        <div class="pl-chip">
-          <img class="pl-avatar" id="plAvatar" src="https://picsum.photos/seed/artist/40" alt="" />
-          <div class="pl-id">
-            <div class="pl-name" id="plName">New Audio</div>
-            <div class="pl-handle" id="plHandle">@soundscape</div>
-          </div>
-        </div>
-      </div>
-
-      <div class="pl-artwrap">
-        <img id="plArt" class="pl-art" src="https://picsum.photos/seed/cover/800/800" alt="cover" />
-      </div>
-
-      <div class="pl-timeline">
-        <span id="plCurrent">0:00</span>
-        <input id="plProgress" type="range" min="0" max="100" value="0" />
-        <span id="plDuration">-0:00</span>
-      </div>
-
-      <div class="pl-controls">
-        <button id="plPrev" class="round ghost" aria-label="Previous">⏮</button>
-        <button id="plPlay" class="round primary" aria-label="Play">▶︎</button>
-        <button id="plNext" class="round ghost" aria-label="Next">⏭</button>
-      </div>
-
-      <audio id="plAudio" preload="metadata"></audio>
+    <!-- Now Playing (replaces the old music player) -->
+<div id="nowplaying-widget" class="np">
+  <div class="np-header">
+    <div class="np-left">
+      <span class="np-dot" aria-hidden="true"></span>
+      <span class="np-title">Now Playing</span>
     </div>
+    <button id="npClear" class="np-clear" aria-label="Stop all">Stop all</button>
+  </div>
+
+  <ul id="npList" class="np-list" aria-live="polite">
+    <!-- items injected by app.js -->
+  </ul>
+</div>
+
 
     <!-- Weather Widget -->
     <div id="weather-widget" class="wx">
